@@ -6,89 +6,53 @@
 
 Adafruit_NeoPixel pixels = Adafruit_NeoPixel(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-int delayTime = 20; // Delay between shifts
+const int delayTime = 10; // Delay between blinks in milliseconds
 
-// Struct to store RGB color
-struct Color
+// Constant color to glow
+const int red = 255;
+const int green = 40;
+const int blue = 0;
+
+void setStripColor(int r, int g, int b)
 {
-  int red;
-  int green;
-  int blue;
-};
-
-// Array to hold colors for each pixel
-Color pixelColors[NUMPIXELS];
-
-// Current RGB values for generating the next color
-int red = 255, green = 0, blue = 0;
-
-void nextColor()
-{
-  // Generate the next color in the RGB spectrum
-  if (red == 255 && green < 255 && blue == 0)
+  for (int i = 0; i < NUMPIXELS; i++)
   {
-    green++; // Red to yellow
+    pixels.setPixelColor(i, pixels.Color(r, g, b));
   }
-  else if (green == 255 && red > 0 && blue == 0)
-  {
-    red--; // Yellow to green
-  }
-  else if (green == 255 && blue < 255 && red == 0)
-  {
-    blue++; // Green to cyan
-  }
-  else if (blue == 255 && green > 0 && red == 0)
-  {
-    green--; // Cyan to blue
-  }
-  else if (blue == 255 && red < 255 && green == 0)
-  {
-    red++; // Blue to magenta
-  }
-  else if (red == 255 && blue > 0 && green == 0)
-  {
-    blue--; // Magenta to red
-  }
+  pixels.show();
 }
 
-void shiftColors()
+void blinkStrip(int times)
 {
-  // Shift all colors to the next pixel
-  for (int i = NUMPIXELS - 1; i > 0; i--)
+  for (int i = 0; i < times; i++)
   {
-    pixelColors[i] = pixelColors[i - 1];
-  }
+    setStripColor(0, 0, 0); // Turn off the strip
+    delay(delayTime);
 
-  // Generate a new color for the first pixel
-  pixelColors[0] = {red, green, blue};
-  nextColor();
+    setStripColor(red, green, blue); // Turn on the strip
+    delay(delayTime);
+  }
 }
 
 void setup()
 {
   Serial.begin(9600);
   pixels.begin(); // Initialize NeoPixel library
-
-  // Initialize the color array with a gradient
-  for (int i = 0; i < NUMPIXELS; i++)
-  {
-    pixelColors[i] = {red, green, blue};
-    nextColor();
-  }
+  randomSeed(analogRead(A0)); // Seed random number generator
 }
 
 void loop()
 {
-  // Shift colors to the next pixel
-  shiftColors();
+  // Keep the strip glowing with the fixed color
+  setStripColor(red, green, blue);
 
-  // Update the LED strip with new colors
-  for (int i = 0; i < NUMPIXELS; i++)
-  {
-    pixels.setPixelColor(i, pixels.Color(pixelColors[i].red, pixelColors[i].green, pixelColors[i].blue));
-  }
-  pixels.show(); // Display updated colors
+  // Generate random values
+  int rand1 = random(500, 2001); // Random duration in milliseconds (500 to 2000)
+  int rand2 = random(1, 11);     // Random number of blinks (1 to 10)
 
-  // Wait before shifting again
-  delay(delayTime);
+  // Wait for a random duration
+  delay(rand1);
+
+  // Blink the strip random times
+  blinkStrip(rand2);
 }
